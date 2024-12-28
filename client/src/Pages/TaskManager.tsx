@@ -7,10 +7,11 @@ import {
 } from 'react';
 import { EnhancedTable } from '../Components/Datatable';
 import type { HeadCell, Order, TaskList } from '../@types';
-import { Alert, Button, type AlertColor } from '@mui/material';
+import { Alert, type AlertColor } from '@mui/material';
 import { KeepMountedModal } from '../Components/Modal';
 import axios from 'axios';
 import { DEFAULT_TASK } from '../utils/const';
+import { CustomButton } from '../Components/CustomButton';
 
 export const TaskManager: FunctionComponent = () => {
   const [order, setOrder] = useState<Order>('desc');
@@ -31,7 +32,7 @@ export const TaskManager: FunctionComponent = () => {
     { id: 'status', numeric: false, label: 'Status' },
     { id: 'description', numeric: false, label: 'Description', sortable: true },
     { id: 'createdAt', numeric: false, label: 'Created At', sortable: true },
-    { numeric: false, label: 'Actions' },
+    { numeric: true, label: 'Actions' },
   ];
 
   const fetchTasks = useCallback(async () => {
@@ -41,7 +42,7 @@ export const TaskManager: FunctionComponent = () => {
       const response = await axios.get(`http://localhost:8989/task/getTasks`, {
         params: {
           sortBy: orderBy,
-          order: order,
+          order,
           limit: rowsPerPage,
           offset,
         },
@@ -127,23 +128,9 @@ export const TaskManager: FunctionComponent = () => {
     }
   };
 
-  const handleEditTask = async (id: number) => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `http://localhost:8989/task/getTask/${id}`
-      );
-      const data = response.data;
-      if (!data.status) throw new Error(data.message);
-
-      setTask(data.rows[0]);
-      setModalOpen(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      showAlert({ type: 'error', alertMessage: error.message });
-    } finally {
-      setLoading(false);
-    }
+  const handleOpenModal = (task: TaskList) => {
+    setTask(task);
+    setModalOpen(true);
   };
 
   const handleUpdateTask = useCallback(
@@ -179,9 +166,10 @@ export const TaskManager: FunctionComponent = () => {
     >
       <h1>Task Manager</h1>
 
-      <Button variant="contained" onClick={() => setModalOpen(true)}>
-        Add New Task
-      </Button>
+      <CustomButton
+        label="Add Task"
+        onClick={() => handleOpenModal(DEFAULT_TASK)}
+      />
 
       <KeepMountedModal
         open={isModalOpen}
@@ -191,13 +179,26 @@ export const TaskManager: FunctionComponent = () => {
         setValue={setTask}
       />
 
-      {alert && <Alert severity={alert.type}>{alert.alertMessage}</Alert>}
+      {alert && (
+        <Alert
+          style={{
+            width: '50%',
+            margin: '0 auto',
+            marginTop: 10,
+            marginBottom: 10,
+            textAlign: 'center',
+          }}
+          severity={alert.type}
+        >
+          {alert.alertMessage}
+        </Alert>
+      )}
 
       <EnhancedTable
         tableHeader={headCells}
         item={items}
         onDelete={handleDeleteTask}
-        onEdit={handleEditTask}
+        onEdit={handleOpenModal}
         loading={loading}
         handleRequestSort={handleRequestSort}
         handleChangePage={handleChangePage}

@@ -10,34 +10,18 @@ import type { HeadCell, Order, TaskList } from '../@types';
 import moment from 'moment';
 import {
   Box,
-  Button,
   CircularProgress,
   TablePagination,
   TableSortLabel,
 } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
-
-export interface BasicTableProps {
-  handleChangePage: (event: unknown, newPage: number) => void;
-  handleChangeRowsPerPage: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleRequestSort: (property: keyof TaskList) => void;
-  item: TaskList[];
-  loading: boolean;
-  onDelete: (id: number) => void;
-  onEdit: (id: number) => void;
-  order: Order;
-  orderBy: string;
-  page: number;
-  rowsPerPage: number;
-  tableHeader: readonly HeadCell[];
-  totalRows: number;
-}
+import { CustomButton } from './CustomButton';
 
 interface EnhancedTableProps {
+  headCells: readonly HeadCell[];
   onRequestSort: (property: keyof TaskList) => void;
   order: Order;
   orderBy: string;
-  headCells: readonly HeadCell[];
 }
 
 export const EnhancedTableHead: FunctionComponent<EnhancedTableProps> = (
@@ -45,17 +29,17 @@ export const EnhancedTableHead: FunctionComponent<EnhancedTableProps> = (
 ) => {
   const { order, orderBy, onRequestSort, headCells } = props;
 
-  const createSortHandler = (property: keyof TaskList) => () => {
+  const createSortHandler = (property: keyof TaskList) => () =>
     onRequestSort(property);
-  };
 
   return (
     <TableHead>
-      <TableRow>
+      <TableRow style={{ borderBottom: '2px solid #969696' }}>
         {headCells.map((headCell, index) => (
           <TableCell
             key={headCell.id || index}
-            align={headCell.numeric ? 'right' : 'left'}
+            align={headCell.numeric ? 'center' : 'left'}
+            style={{ fontWeight: 'bold' }}
             sortDirection={orderBy === headCell.id ? order : false}
           >
             {headCell.sortable && headCell.id ? (
@@ -64,7 +48,7 @@ export const EnhancedTableHead: FunctionComponent<EnhancedTableProps> = (
                 direction={orderBy === headCell.id ? order : 'asc'}
                 onClick={createSortHandler(headCell.id)}
               >
-                {headCell.label}
+                {headCell.label.toUpperCase()}
                 {orderBy === headCell.id ? (
                   <Box component="span" sx={visuallyHidden}>
                     {order === 'desc'
@@ -74,7 +58,7 @@ export const EnhancedTableHead: FunctionComponent<EnhancedTableProps> = (
                 ) : null}
               </TableSortLabel>
             ) : (
-              headCell.label
+              headCell.label.toUpperCase()
             )}
           </TableCell>
         ))}
@@ -82,6 +66,22 @@ export const EnhancedTableHead: FunctionComponent<EnhancedTableProps> = (
     </TableHead>
   );
 };
+
+export interface BasicTableProps {
+  handleChangePage: (event: unknown, newPage: number) => void;
+  handleChangeRowsPerPage: (event: ChangeEvent<HTMLInputElement>) => void;
+  handleRequestSort: (property: keyof TaskList) => void;
+  item: TaskList[];
+  loading: boolean;
+  onDelete: (id: number) => void;
+  onEdit: (task: TaskList) => void;
+  order: Order;
+  orderBy: string;
+  page: number;
+  rowsPerPage: number;
+  tableHeader: readonly HeadCell[];
+  totalRows: number;
+}
 
 export const EnhancedTable: FunctionComponent<BasicTableProps> = (
   props: BasicTableProps
@@ -103,8 +103,21 @@ export const EnhancedTable: FunctionComponent<BasicTableProps> = (
   } = props;
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <Paper sx={{ width: '100%', mb: 2 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        maxWidth: '800px',
+        margin: '0 auto',
+        mt: 2,
+        border: '1px solid #969696',
+        borderRadius: '8px',
+      }}
+    >
+      <Paper>
         {loading ? (
           <div
             style={{
@@ -117,11 +130,14 @@ export const EnhancedTable: FunctionComponent<BasicTableProps> = (
             <CircularProgress />
           </div>
         ) : (
-          <TableContainer>
-            <Table
-              sx={{ minWidth: 650, maxWidth: 800, margin: '0 auto' }}
-              size="medium"
-            >
+          <TableContainer
+            sx={{
+              backgroundColor: '#fbfbfb',
+              width: 800,
+              flex: 1, // flexChild
+            }}
+          >
+            <Table sx={{ margin: '0 auto' }} size="medium">
               <EnhancedTableHead
                 order={order}
                 orderBy={orderBy as string}
@@ -139,22 +155,27 @@ export const EnhancedTable: FunctionComponent<BasicTableProps> = (
                       <TableCell>
                         {moment(task.createdAt).format('YYYY-MM-DD')}
                       </TableCell>
-                      <TableCell align="inherit">
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          onClick={() => onEdit(task.id!)} // Trigger edit function on click
-                          style={{ marginRight: 8 }}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="contained"
+                      <TableCell
+                        align="right"
+                        sx={{
+                          flexGrow: 1,
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          gap: 2,
+                        }}
+                      >
+                        <CustomButton
+                          label="Delete"
+                          buttonType={true}
                           color="error"
+                          variant="filled"
                           onClick={() => onDelete(task.id!)} // Trigger delete function on click
-                        >
-                          Delete
-                        </Button>
+                        />
+                        <CustomButton
+                          label="edit"
+                          buttonType={true}
+                          onClick={() => onEdit({ ...task })} // Trigger edit function on click
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -168,8 +189,6 @@ export const EnhancedTable: FunctionComponent<BasicTableProps> = (
           count={totalRows}
           rowsPerPage={rowsPerPage}
           page={page}
-          size="medium"
-          sx={{ minWidth: 650, maxWidth: 800, margin: '0 auto' }}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
